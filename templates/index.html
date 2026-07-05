@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}
+TradeDesk | Build Discipline. Trade Better.
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>
+        Build Discipline.<br>
+        Trade Better.
+    </h1>
+        <div class="hero-buttons">
+            <a href="/signup">
+                <button>Create Account</button>
+            </a>
+            <a href="/login">
+                <button>Login</button>
+            </a>
+        </div>
+</section>
+
+<section>
+    <h2>Why TradeDesk?</h2>
+    <div class="features">
+        <div class="feature-card">
+            <h3>🔥 Trading Streak </h3> 
+            <p>
+                Never break your trading discipline.
+                Build consistency every trading day.
+            </p>
+        </div>
+        <div class="feature-card">
+        <h3>📊 Accuracy Tracker</h3>
+        <p>
+            Track your last 10 trades and monitor your win rate.
+        </p>
+        </div>
+        <div class="feature-card">
+            <h3>📈 Weekly Analytics</h3>
+            <p>
+                View profit, loss, and trading statistics with interactive graphs.
+            </p>
+        </div>
+        <div class="feature-card">
+            <h3>🏆 Longest Streak</h3>
+            <p>
+                Compete with yourself and beat your personal best.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="cta">
+    <h2>Ready to become a more disciplined trader?</h2>
+    <a href="/signup">
+        <button>Get Started</button>
+    </a>
+</section>
+{% endblock %}

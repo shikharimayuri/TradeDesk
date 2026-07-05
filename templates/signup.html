@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}
+TradeDesk | Sign Up
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <h2>Create Account</h2>
+        <p class="auth-subtitle">Join TradeDesk and start trading with discipline</p>
+        <form class="auth-form" action="/signup" method="POST">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" placeholder="trader123" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email"  placeholder="name@example.com" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn-primary">Create Account</button>
+        </form>
+        <div class="auth-footer">
+            Already have an account? <a href="/login">Log In</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

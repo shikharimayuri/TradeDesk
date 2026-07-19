@@ -1,0 +1,218 @@
+Created At: 2026-07-18T18:53:39Z
+Completed At: 2026-07-18T18:53:39Z
+File Path: `file:///c:/Users/ASUS/TradeDesk/templates/analytics.html`
+Total Lines: 211
+Total Bytes: 5613
+Showing lines 1 to 211
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1: {% extends "base.html" %}
+2: 
+3: {% block title %}
+4: TradeDesk | Analytics
+5: {% endblock %}
+6: 
+7: {% block content %}
+8: 
+9: <h1 style="margin-bottom: 25px;">Analytics</h1>
+10: 
+11: <form method="GET" class="filter-form">
+12:     <label for="start">From</label>
+13:     <input
+14:         type="date"
+15:         id="start"
+16:         name="start"
+17:         value="{{start}}"
+18:     >
+19:     <label for="end">To</label>
+20:     <input
+21:         type="date"
+22:         id="end"
+23:         name="end"
+24:         value="{{end}}"
+25:     >
+26:     <button type="submit">
+27:         Apply
+28:     </button>
+29: </form>
+30: 
+31: <hr class="dashbaord-divider">
+32: 
+33: <div class="analytics-summary dashboard-cards">
+34:     <div class="stat-card">
+35:         <h3>Total Trades</h3>
+36:         <h2>
+37:             {{ trades|length }}
+38:         </h2>
+39:     </div>
+40:     <div class="stat-card">
+41:         <h3>Accuracy</h3>
+42:         <h2>
+43:             {{ accuracy }}%
+44:         </h2>
+45:     </div>
+46:     <div class="stat-card">
+47:         <h3>Total P&L</h3>
+48:         <h2>
+49:             {% if total_pnl > 0 %}
+50:             <span class="profit">
+51:                 +${{ "%.2f"|format(total_pnl) }}
+52:             </span>
+53:             {% elif total_pnl < 0 %}
+54:             <span class="loss">
+55:                 -${{ "%.2f"|format(total_pnl|abs) }}
+56:             </span>
+57:             {% else %}
+58:             <span class="neutral">
+59:                 $0.00
+60:             </span>
+61:             {% endif %}
+62:         </h2>
+63:     </div>
+64:     <div class="stat-card">
+65:         <h3>Plan Discipline</h3>
+66:         <h2>
+67:             {{ plan_discipline.percentage }}%
+68:         </h2>
+69:         <p class="discipline-followed">
+70:             ✅ {{ plan_discipline.followed }} Followed
+71:         </p>
+72:         <p class="discipline-broken">
+73:             ❌ {{ plan_discipline.broken }} Broken
+74:         </p>
+75:     </div>
+76:     <div class="stat-card">
+77:         <h3>🏆 Best Day</h3>
+78:         {% if best_day %}
+79:         <h2>
+80:             {% if best_day.pnl > 0 %}
+81:             <span class="profit">
+82:                 +${{ "%.2f"|format(best_day.pnl) }}
+83:             </span>
+84:             {% elif best_day.pnl < 0 %}
+85:             <span class="loss">
+86:                 -${{ "%.2f"|format(best_day.pnl|abs) }}
+87:             </span>
+88:             {% else %}
+89:             <span class="neutral">
+90:                 $0.00
+91:             </span>
+92:             {% endif %}
+93:         </h2>
+94:         <p style="margin-top: 10px; color: #94a3b8; font-size: 14px;">
+95:             {{ best_day.date }}
+96:         </p>
+97:         {% else %}
+98:         <h2 class="neutral">-</h2>
+99:         {% endif %}
+100:     </div>
+101:     <div class="stat-card">
+102:         <h3>💀 Worst Day</h3>
+103:         {% if worst_day %}
+104:         <h2>
+105:             {% if worst_day.pnl > 0 %}
+106:             <span class="profit">
+107:                 +${{ "%.2f"|format(worst_day.pnl) }}
+108:             </span>
+109:             {% elif worst_day.pnl < 0 %}
+110:             <span class="loss">
+111:                 -${{ "%.2f"|format(worst_day.pnl|abs) }}
+112:             </span>
+113:             {% else %}
+114:             <span class="neutral">
+115:                 $0.00
+116:             </span>
+117:             {% endif %}
+118:         </h2>
+119:         <p style="margin-top: 10px; color: #94a3b8; font-size: 14px;">
+120:             {{ worst_day.date }}
+121:         </p>
+122:         {% else %}
+123:         <h2 class="neutral">-</h2>
+124:         {% endif %}
+125:     </div>
+126: </div>
+127:     <h2>Trading Hours</h2>
+128:     <table class="trade-table">
+129:         <thead>
+130:             <tr>
+131:                 <th>Hour</th>
+132:                 <th>Trades</th>
+133:                 <th>Accuracy</th>
+134:                 <th>Average P&L</th>
+135:             </tr>
+136:         </thead>
+137:         <tbody>
+138:             {% for hour in trading_hours %}
+139: 
+140:             <tr>
+141:                 <td>
+142:                     {{"%02d"|format(hour.hour)}}:00-
+143:                     {{"%02d"|format(hour.hour+1)}}:00
+144:                 </td>
+145:                 <td>
+146:                     {{hour.trades}}
+147:                 </td>
+148:                 <td>
+149:                     {{hour.accuracy}}%
+150:                 </td>
+151:                 <td>
+152:                     {% if hour.avg_pnl > 0 %}
+153:                     <span class="profit">
+154:                         +${{ "%.2f"|format(hour.avg_pnl) }}
+155:                     </span>
+156:                     {% elif hour.avg_pnl < 0 %}
+157:                     <span class="loss">
+158:                         -${{ "%.2f"|format(hour.avg_pnl|abs) }}
+159:                     </span>
+160:                     {% else %}
+161:                     <span class="neutral">
+162:                         $0.00
+163:                     </span>
+164:                     {% endif %}
+165:                 </td>
+166:             </tr>
+167:             {% endfor %}
+168:         </tbody>
+169:     </table>
+170: <h2>Daily Net P&L</h2>
+171: <div id="dailyPnlChart"></div>
+172: <script>
+173:     const dailyData = {{ daily_pnl | tojson }};
+174:     const dates = dailyData.map(item=> item.date);
+175:     const pnl = dailyData.map(item => item.pnl);
+176:     const options = {
+177:         chart  : {
+178:             type:"line",
+179:             height:350,
+180:             toolbar:{
+181:                 show:false
+182:             }
+183:         },
+184:         series :[{
+185:             name : "Net P&L",
+186:             data:pnl
+187:         }],
+188:         xaxis:{
+189:             categories:dates
+190:         },
+191:         stroke:{
+192:             curve:"smooth",
+193:             width:3
+194:         },
+195:         markers:{
+196:             size:5
+197:         },
+198:         tooltip:{
+199:             y:{
+200:                 formatter:function(value){
+201:                     return "$"+ value.toFixed(2);
+202:                 }
+203:             }
+204:         }
+205:     };
+206:     new ApexCharts(
+207:         document.querySelector("#dailyPnlChart"),
+208:         options
+209:     ).render();
+210: </script>
+211: {% endblock %}

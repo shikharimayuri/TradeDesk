@@ -118,22 +118,22 @@ TradeDesk | Dashboard
 
 </table>
 
-<div class="calendar-card">
+<div class="calender-card">
 
-    <div class="calendar-header">
+    <div class="calender-header">
 
-        <a href="{{url_for('dashboard', year=prev_year,month=prev_month)}}" class="calendar-btn">
+        <a href="{{url_for('dashboard', year=prev_year,month=prev_month)}}" class="calender-btn">
             &#10094;
         </a>
 
         <h3>{{current_month}} {{ current_year }}</h3>
 
-        <a href="{{url_for('dashboard', year=next_year, month=next_month)}}" class="calendar-btn">
+        <a href="{{url_for('dashboard', year=next_year, month=next_month)}}" class="calender-btn">
             &#10095;
         </a>
     </div>
 
-    <div class="calendar-weekdays">
+    <div class="calender-weekdays">
         <div>Mon</div>
         <div>Tue</div>
         <div>Wed</div>
@@ -143,12 +143,12 @@ TradeDesk | Dashboard
         <div>Sun</div>
     </div>
 
-    <div class="calendar-grid">
-        {% for cell in calendar_data %}
+    <div class="calender-grid">
+        {% for cell in calender_data %}
 
         {% if cell is none %}
 
-        <div class="calendar-empty"></div>
+        <div class="calender-empty"></div>
 
         {% else %}
 
@@ -161,10 +161,10 @@ TradeDesk | Dashboard
             month=current_month_number,
             selected=day.strftime('%Y-%m-%d')
             )}}"
-            class="calendar-link"
+            class="calender-link"
         >
 
-        <div class="calendar-day {{info.status}}{% if selected_date == day %} selected{% endif %}">
+        <div class="calender-day {{info.status}}{% if selected_date == day %} selected{% endif %}">
 
             <div class="day-number">
                 {{day.day}}
@@ -239,12 +239,12 @@ TradeDesk | Dashboard
 
         <div class="summary-item">
             <h4>Accuracy</h4>
-            <p>{{ day_summary.accuracy }}%</p>
+            <p>{{ day_summary.accuracy }}</p>
         </div>
 
         <div class="summary-item">
             <h4>Plan Followed</h4>
-            <p>{{ day_summary.followed_percentage }}%</p>
+            <p>{{ day_summary.followed_percentage }}</p>
         </div>
 
         <div class="summary-item">

@@ -96,25 +96,43 @@ def calculate_streaks(trades):
 @login_required
 def add_trade():
     if request.method == "POST":
+
         trade_date_str = request.form.get("trade_date")
         trade_time_str = request.form.get("trade_time")
         amount_str = request.form.get("amount")
-        outcome = request.form.get("outcome") # "profit" or "loss"
-        discipline = request.form.get("discipline") # "yes" or "no"
+        discipline = request.form.get("discipline")
         notes = request.form.get("notes")
-        
-        # Validations
-        if not trade_date_str or not amount_str or not outcome or not discipline:
+
+        # Required field validation
+        if not trade_date_str or not amount_str or not discipline:
             flash("Please fill in all required fields.", "danger")
             return redirect(url_for("trade.add_trade"))
-            
+
         try:
-            trade_date = datetime.strptime(trade_date_str, "%Y-%m-%d").date()
-            trade_time = datetime.strptime(trade_time_str, "%H:%M").time() if trade_time_str else None
+            trade_date = datetime.strptime(
+                trade_date_str,
+                "%Y-%m-%d"
+            ).date()
+
+            trade_time = (
+                datetime.strptime(
+                    trade_time_str,
+                    "%H:%M"
+                ).time()
+                if trade_time_str else None
+            )
+
             amount = float(amount_str)
-            is_profit = True if outcome == "profit" else False
-            followed_plan = True if discipline == "yes" else False
-            
+
+            if amount == 0:
+                flash("Amount cannot be zero.", "danger")
+                return redirect(url_for("trade.add_trade"))
+
+            # Automatically determine profit/loss
+            is_profit = amount > 0
+
+            followed_plan = discipline == "yes"
+
             new_trade = Trade(
                 user_id=current_user.id,
                 trade_date=trade_date,
@@ -124,19 +142,27 @@ def add_trade():
                 followed_plan=followed_plan,
                 notes=notes
             )
+
             db.session.add(new_trade)
             db.session.commit()
+
             flash("Trade logged successfully!", "success")
-            return redirect(url_for("trade.dashboard"))
+            return redirect(url_for("dashboard"))
+
         except Exception as e:
             db.session.rollback()
-            flash(f"Error logging trade: {str(e)}", "danger")
+            flash(f"Error logging trade: {e}", "danger")
             return redirect(url_for("trade.add_trade"))
-            
-    # Default values for GET request
+
     today_str = date.today().strftime("%Y-%m-%d")
     now_str = datetime.now().strftime("%H:%M")
-    return render_template("add_trade.html", today_str=today_str, now_str=now_str)
+
+    return render_template(
+        "add_trade.html",
+        today_str=today_str,
+        now_str=now_str
+    )
+
 
 @trade.route("/trades/delete/<int:trade_id>", methods=["POST"])
 @login_required
@@ -144,4 +170,14 @@ def delete_trade(trade_id):
     trade_item = Trade.query.get_or_404(trade_id)
     if trade_item.user_id != current_user.id:
         flash("You are not authorized to delete this trade.", "danger")
-        return redirect(url_for("trade.dashboard"))
+        return redirect(url_for("dashboard"))
+        
+    try:
+        db.session.delete(trade_item)
+        db.session.commit()
+        flash("Trade deleted successfully.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error deleting trade: {str(e)}", "danger")
+        
+    return redirect(url_for("dashboard"))

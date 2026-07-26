@@ -331,42 +331,24 @@ def group_trades_by_day(user_id):
 
 def is_successful_day(day_trades):
 
-
-    
-
-
     followed = 0
-
-
     not_followed = 0
 
-
-
-
-
-    for trade  in day_trades:
-
-
-
-
+    for trade in day_trades:
+        print(
+            trade.trade_date,
+            "Followed:", trade.followed_plan
+        )
 
         if trade.followed_plan:
-
-
-            followed+=1
-
-
+            followed += 1
         else:
+            not_followed += 1
 
-
-            not_followed+=1
-
-
-        
-
+    print("Followed:", followed)
+    print("Not Followed:", not_followed)
 
     return followed > not_followed
-
 
 
 
@@ -383,12 +365,7 @@ def summarize_day(day_trades):
     pnl = 0
 
     for trade in day_trades:
-
-        if trade.is_profit:
-            pnl += trade.amount
-        else:
-            pnl -= trade.amount
-
+        pnl += trade.amount
 
 
 
@@ -725,10 +702,7 @@ def get_day_summary(user_id, selected_date):
 
 
 
-    total_pnl = sum(
-    trade.amount if trade.is_profit else -trade.amount
-    for trade in trades
-    )
+    total_pnl = sum(trade.amount for trade in trades)
 
 
     
@@ -811,3 +785,173 @@ def get_day_summary(user_id, selected_date):
 
         "status":status
     }
+
+def get_weekly_pnl_graph(user_id):
+
+    monday,friday=get_current_trading_week()
+
+    graph_data=[]
+
+    current = monday
+
+    while current <= friday:
+
+        total = (
+            db.session.query(func.sum(Trade.amount))
+            .filter(
+                Trade.user_id == user_id,
+                Trade.trade_date == current
+            )
+            .scalar()
+        )
+
+        graph_data.append({
+            "day":current.strftime("%d %b"),
+            "pnl":float(total) if total else 0
+        })
+
+        current += timedelta(days=1)
+
+    return graph_data
+
+def get_weekly_trade_graph(user_id):
+
+    monday, friday = get_current_trading_week()
+
+    graph_data = []
+
+    current = monday
+
+    while current <= friday:
+
+        trade_count = (
+            Trade.query.filter(
+                Trade.user_id == user_id,
+                Trade.trade_date == current
+            ).count()
+        )
+
+        graph_data.append({
+            "day": current.strftime("%d %b"),
+            "trades": trade_count
+        })
+
+        current += timedelta(days=1)
+
+    return graph_data
+
+def get_weekly_accuracy_graph(user_id):
+
+    monday, friday = get_current_trading_week()
+
+    graph_data = []
+
+    current = monday
+
+    while current <= friday:
+
+        total = (
+            Trade.query.filter(
+                Trade.user_id == user_id,
+                Trade.trade_date == current
+            ).count()
+        )
+
+        profitable = (
+            Trade.query.filter(
+                Trade.user_id == user_id,
+                Trade.trade_date == current,
+                Trade.is_profit == True
+            ).count()
+        )
+
+        if total == 0:
+            accuracy = 0
+        else:
+            accuracy = round((profitable / total) * 100, 1)
+
+        graph_data.append({
+            "day": current.strftime("%d %b"),
+            "accuracy": accuracy
+        })
+
+        current += timedelta(days=1)
+
+    return graph_data
+
+def get_weekly_win_loss(user_id):
+
+    monday, friday = get_current_trading_week()
+
+    wins = (
+        Trade.query.filter(
+            Trade.user_id == user_id,
+            Trade.trade_date >= monday,
+            Trade.trade_date <= friday,
+            Trade.is_profit == True
+        ).count()
+    )
+
+    losses = (
+        Trade.query.filter(
+            Trade.user_id == user_id,
+            Trade.trade_date >= monday,
+            Trade.trade_date <= friday,
+            Trade.is_profit == False
+        ).count()
+    )
+
+    total = wins + losses
+
+    if total == 0:
+        win_percent = 0
+        loss_percent = 0
+    else:
+        win_percent = round((wins / total) * 100, 1)
+        loss_percent = round((losses / total) * 100, 1)
+
+    return {
+        "wins": wins,
+        "losses": losses,
+        "win_percent": win_percent,
+        "loss_percent": loss_percent
+    }
+
+def get_weekly_discipline_graph(user_id):
+
+    monday, friday = get_current_trading_week()
+
+    graph_data = []
+
+    current = monday
+
+    while current <= friday:
+
+        total = (
+            Trade.query.filter(
+                Trade.user_id == user_id,
+                Trade.trade_date == current
+            ).count()
+        )
+
+        followed = (
+            Trade.query.filter(
+                Trade.user_id == user_id,
+                Trade.trade_date == current,
+                Trade.followed_plan == True
+            ).count()
+        )
+
+        if total == 0:
+            discipline = 0
+        else:
+            discipline = round((followed / total) * 100, 1)
+
+        graph_data.append({
+            "day": current.strftime("%d %b"),
+            "discipline": discipline
+        })
+
+        current += timedelta(days=1)
+
+    return graph_data

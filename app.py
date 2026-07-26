@@ -22,258 +22,161 @@ from calendar import monthrange, month_name
 
 from datetime import date,datetime
 
-from services.dashboard_service import ( 
+from services.dashboard_service import (
 
     get_recent_trades,
-
     get_weekly_trade_count,
-
     get_weekly_pnl,
-
     get_weekly_accuracy,
-
     get_current_streak,
-
     get_monthly_calendar,
-
     get_day_details,
-
-    get_day_summary
-
-) 
-
-from services.analytics_service import (
-
-    get_trades_between,
-
-    calculate_accuracy,
-
-    calculate_pnl,
-
-    calculate_plan_discipline,
-
-    calculate_best_worst_day,
-
-    calculate_trading_hours,
-
-    get_daily_pnl
-
+    get_day_summary,
+    get_weekly_pnl_graph,
+    get_weekly_accuracy_graph,
+    get_weekly_win_loss,
+    get_weekly_trade_graph
 )
 
-
+from services.analytics_service import (
+    get_trades_between,
+    calculate_accuracy,
+    calculate_pnl,
+    calculate_plan_discipline,
+    calculate_best_worst_day,
+    calculate_trading_hours,
+    get_daily_pnl
+)
 
 app=Flask(__name__)
-
 app.config.from_object(Config)
 
-
-
 db.init_app(app)
-
 bcrypt.init_app(app)
-
 login_manager.init_app(app)
-
 migrate = Migrate(app,db)
 
-
-
 app.register_blueprint(auth)
-
 app.register_blueprint(trade)
 
-
-
 @app.route("/")
-
 def home():
 
     return render_template("index.html")
 
-
-
 @app.route("/dashboard")
-
 @login_required
-
 def dashboard():
 
-
-
     recent_trades = get_recent_trades(current_user.id)
+    print("RECENT:", recent_trades)
 
+    weekly_trade_count = get_weekly_trade_count(current_user.id)
+    print("WEEKLY COUNT:", weekly_trade_count)
 
+    weekly_pnl = get_weekly_pnl(current_user.id)
 
-    weekly_trade_count = get_weekly_trade_count(
+    weekly_pnl_graph = get_weekly_pnl_graph(current_user.id)
 
-        current_user.id
+    weekly_accuracy_graph = get_weekly_accuracy_graph(current_user.id)
 
-    )
-
-
-
-    weekly_pnl =  get_weekly_pnl(current_user.id)
-
-
+    weekly_win_loss = get_weekly_win_loss(current_user.id)
 
     weekly_accuracy = get_weekly_accuracy(current_user.id)
 
+    weekly_trade_graph = get_weekly_trade_graph(current_user.id)
 
+    wins = weekly_win_loss["wins"]
+  
+    losses = weekly_win_loss["losses"]
 
     current_streak = get_current_streak(current_user.id)
-
-
+    print("CURRENT STREAK:", current_streak)
 
     today = date.today()
 
-
-
     year = request.args.get("year", default=today.year, type=int)
-
     month = request.args.get("month", default=today.month, type=int)
-
     selected = request.args.get("selected")
 
-
-
     if month == 1:
-
         prev_month = 12
-
-        prev_year = year -1
-
-
-
+        prev_year = year - 1
     else:
-
         prev_month = month - 1
-
         prev_year = year
 
-
-
     if month == 12:
-
         next_month = 1
-
         next_year = year + 1
-
-        
-
     else:
-
-        next_month =  month + 1
-
-        next_year = year 
-
-
+        next_month = month + 1
+        next_year = year
 
     calendar_data = get_monthly_calendar(
-
         current_user.id,
-
-        year,month
-
+        year,
+        month
     )
 
-
+    print("CALENDAR CELLS:", len(calendar_data))
+    print("FIRST 10 CELLS:")
+    for cell in calendar_data[:10]:
+        print(cell)
 
     selected_date = None
 
-
-
     if selected:
-
         selected_date = datetime.strptime(
-
             selected,
-
             "%Y-%m-%d"
-
         ).date()
 
-
-
     day_details = []
-
-
-
     day_summary = None
 
-
-
     if selected_date:
-
-
-
         day_details = get_day_details(
-
             current_user.id,
-
             selected_date
-
         )
-
-
 
         day_summary = get_day_summary(
-
             current_user.id,
-
             selected_date
-
         )
-
-
 
     return render_template(
-
         "dashboard.html",
-
         recent_trades=recent_trades,
-
         weekly_trade_count=weekly_trade_count,
-
         weekly_pnl=weekly_pnl,
-
         weekly_accuracy=weekly_accuracy,
-
+        wins=wins,
+        losses=losses,
         current_streak=current_streak,
-
         calendar_data=calendar_data,
-
         current_month=month_name[month],
-
         current_month_number=month,
-
         current_year=year,
-
         prev_month=prev_month,
-
         prev_year=prev_year,
-
         next_month=next_month,
-
         next_year=next_year,
-
         selected_date=selected_date,
-
         day_details=day_details,
-
-        day_summary=day_summary
-
-        )
-
-
+        day_summary=day_summary,
+        weekly_pnl_graph=weekly_pnl_graph,
+        weekly_accuracy_graph = weekly_accuracy_graph,
+        weekly_win_loss=weekly_win_loss,
+        weekly_trade_graph=weekly_trade_graph,
+    )
 
 @app.route("/analytics")
 
 @login_required
 
 def analytics():
-
-
-
     today = date.today()
 
 
@@ -354,7 +257,7 @@ def analytics():
 
     daily_pnl = get_daily_pnl(trades)
 
-
+    
 
     return render_template(
 

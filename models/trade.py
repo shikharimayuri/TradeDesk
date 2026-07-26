@@ -103,7 +103,7 @@ class Trade(db.Model):
     amount = db.Column(
 
 
-        db.Float(10,2),
+        db.Numeric(10,2),
 
 
         nullable=False

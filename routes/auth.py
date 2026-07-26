@@ -91,29 +91,23 @@ def login():
         print("Email:", repr(email))
 
         print("Password:", repr(password))
-
-
+        print("Password length:", len(password))
 
         user = User.query.filter_by(email=email).first()
 
-
-
         print("User:", user)
-
-
-
+ 
         if user:
-
             print("DB Email:", repr(user.email))
-
             print("Hash:", user.password)
+            print("Hash length:", len(user.password))
 
-
-
-            result = bcrypt.check_password_hash(user.password, password)
-
-            print("Password Match:", result)
-
+            try:
+                result = bcrypt.check_password_hash(user.password, password)
+                print("Password Match:", result)
+            except Exception as e:
+                print("BCRYPT ERROR:", e)
+                raise
 
 
             if result:

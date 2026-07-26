@@ -1,307 +1,101 @@
 {% extends "base.html" %}
-
 {% block title %}
-TradeDesk | Dashboard
+TradeDesk | Log Trade
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-header">
-    <div>
-        <h1>Dashboard</h1>
-        <p class="dashboard-subtitle">
-            Welcome back, {{current_user.username}}!
-        </p>
-    </div>
-
-    <a href="{{url_for('trade.add_trade')}}" class="btn-primary">
-        + Add Trade
-    </a>
-</div>
-<hr class="dashboard-divider">
-
-<div class="dashboard-cards">
-
-    <div class="stat-card">
-        <h3>🔥 Current Streak</h3>
-        <h2>{{current_streak}}</h2>
-    </div>
-
-    <div class="stat-card">
-        <h3>🎯 Accuracy</h3>
-        <h2>
-            {{ weekly_accuracy}}%
-        </h2>
-    </div>
-
-    <div class="stat-card">
-        <h3>💰 Total P&L</h3>
-        <h2>
-            {% if weekly_pnl > 0 %}
-            <span class="profit">
-                ▲ +${{ "{:,.2f}".format(weekly_pnl) }}
-            </span>
-
-            {% elif weekly_pnl < 0 %} <span class="loss">
-                ▼ -${{ "{:,.2f}".format(weekly_pnl|abs) }}
-                </span>
-
-                {% else %}
-                <span class="neutral">
-                    $0.00
-                </span>
-                {% endif %}
-        </h2>
-    </div>
-
-    <div class="stat-card">
-        <h3>📊 Total Trades</h3>
-        <h2>{{weekly_trade_count}}</h2>
-    </div>
-
-</div>
-
-<h2 class="section-title">Recent Trades</h2>
-<table class="trade-table">
-    <thead>
-        <tr>
-            <th>Date</th>
-            <th>Time</th>
-            <th>Amount</th>
-            <th>Plan</th>
-        </tr>
-    </thead>
-
-    <tbody>
-
-        {% for trade in recent_trades %}
-
-        <tr>
-
-            <td>{{ trade.trade_date }}</td>
-
-            <td>{{ trade.trade_time.strftime('%H:%M') if trade.trade_time else '-' }}</td>
-
-            <td>
-
-                {% if trade.amount > 0 %}
-
-                <span class="profit">
-                    +${{ "%.2f"|format(trade.amount) }}
-                </span>
-
-                {% elif trade.amount < 0 %} <span class="loss">
-                    -${{ "%.2f"|format(trade.amount|abs) }}
-                    </span>
-
-                    {% else %}
-
-                    <span class="neutral">
-                        $0.00
-                    </span>
-
-                    {% endif %}
-            </td>
-
-            <td>
-                {% if trade.followed_plan %}
-                ✅
-                {% else %}
-                ❌
-                {% endif %}
-            </td>
-
-        </tr>
-
-        {% endfor %}
-
-    </tbody>
-
-</table>
-
-<div class="calender-card">
-
-    <div class="calender-header">
-
-        <a href="{{url_for('dashboard', year=prev_year,month=prev_month)}}" class="calender-btn">
-            &#10094;
-        </a>
-
-        <h3>{{current_month}} {{ current_year }}</h3>
-
-        <a href="{{url_for('dashboard', year=next_year, month=next_month)}}" class="calender-btn">
-            &#10095;
-        </a>
-    </div>
-
-    <div class="calender-weekdays">
-        <div>Mon</div>
-        <div>Tue</div>
-        <div>Wed</div>
-        <div>Thu</div>
-        <div>Fri</div>
-        <div>Sat</div>
-        <div>Sun</div>
-    </div>
-
-    <div class="calender-grid">
-        {% for cell in calender_data %}
-
-        {% if cell is none %}
-
-        <div class="calender-empty"></div>
-
-        {% else %}
-
-        {% set day = cell.date %}
-        {% set info = cell.info %}
-
-        <a 
-            href="{{url_for('dashboard',
-            year=current_year,
-            month=current_month_number,
-            selected=day.strftime('%Y-%m-%d')
-            )}}"
-            class="calender-link"
-        >
-
-        <div class="calender-day {{info.status}}{% if selected_date == day %} selected{% endif %}">
-
-            <div class="day-number">
-                {{day.day}}
+<div class="auth-wrapper">
+    <div class="auth-card" style="max-width: 550px;">
+        <h2>Log a New Trade</h2>
+        <p class="auth-subtitle">Record your session to maintain your consistency streak</p>
+        
+        <form class="auth-form" action="{{ url_for('trade.add_trade') }}" method="POST">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label for="trade_date">Date *</label>
+                    <input type="date" id="trade_date" name="trade_date" value="{{ today_str }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="trade_time">Time</label>
+                    <input type="time" id="trade_time" name="trade_time" value="{{ now_str }}">
+                </div>
             </div>
-
-            {% if info.status == "success" or info.status == "failure" %}
-
-            <div class="day-trades">
-                {{info.trades}} Trades
-            </div>
-
-            <div class="day-pnl">
-
-                {% if info.pnl >= 0 %}
-                +${{ "%.2f"|format(info.pnl) }}
-                {% else %}
-                -${{ "%.2f"|format(info.pnl|abs) }}
-                {% endif %}
-
-            </div>
-
-            {% elif info.status == "weekend" %}
-
-            <div class="day-empty">
-                Weekend
-            </div>
-
-            {% elif info.status == "no_trade" %}
-
-            <div class="day-empty">
-                No Trade
-            </div>
-
-            {% endif %}
-
-        </div>
-
-        </a>
-
-        {% endif %}
-
-        {% endfor %}
-
-    </div>
-
-    {% if day_summary %}
-
-    <div class="summary-card">
-
-        <div class="summary-item">
-            <h4>Trades</h4>
-            <p>{{ day_summary.total_trades }}</p>
-        </div>
-
-        <div class="summary-item">
-            <h4>Net P&L</h4>
-
-            {% if day_summary.total_pnl >= 0 %}
-
-                <p class="profit">
-                    +${{ "%.2f"|format(day_summary.total_pnl) }}
-                </p>
             
-            {% else %}
-
-                <p class="loss">
-                    -${{ "%.2f"|format(day_summary.total_pnl|abs) }}
-                </p>
-            {% endif %}
-
+            <div class="form-group">
+                <label for="amount">Amount ($) *</label>
+                <input type="number" id="amount" name="amount" step="0.01" placeholder="e.g. 150.00 or -150.00" required>
+            </div>
+            <div id="trade-status" class="status-neutral">
+                Enter an amount
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                <div class="form-group">
+                    <label>Followed Plan? *</label>
+                    <div class="toggle-group">
+                        <label class="toggle-option">
+                            <input type="radio" name="discipline" value="yes" checked required>
+                            <span>Yes</span>
+                        </label>
+                        <label class="toggle-option">
+                            <input type="radio" name="discipline" value="no">
+                            <span>No</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="notes">Trade Notes / Reflections</label>
+                <textarea id="notes" name="notes" class="notes-box" rows="4" placeholder="Enter setup details, rules followed, feelings, etc."></textarea>
+            </div>
+            
+            <button type="submit" class="btn-primary" style="background-color: #22c55e;">Log Trade</button>
+        </form>
+        
+        <div class="auth-footer">
+            <a href="{{ url_for('dashboard') }}">Cancel and Back to Dashboard</a>
         </div>
-
-        <div class="summary-item">
-            <h4>Accuracy</h4>
-            <p>{{ day_summary.accuracy }}</p>
-        </div>
-
-        <div class="summary-item">
-            <h4>Plan Followed</h4>
-            <p>{{ day_summary.followed_percentage }}</p>
-        </div>
-
-        <div class="summary-item">
-            <h4>Status</h4>
-            <p>{{ day_summary.status }}</p>
-        </div>
-
     </div>
+</div>
 
-{% endif %}
+<script>
+    const amountInput = document.getElementById("amount");
+    const statusBox = document.getElementById("trade-status");
 
-    {% if day_details %}
+    amountInput.addEventListener("input", function (){
+        const amount = parseFloat(this.value);
 
-    <div class="day-details-card">
+        statusBox.className = "";
+        this.classList.remove(
+            "amount-profit",
+            "amount-loss",
+            "amount-neutral"
+        );
 
-        <h2>
-            {{selected_date.strftime("%d %B %Y")}}
-        </h2>
+        if(this.value === "") {
+            statusBox.classList.add("status-neutral");
+            statusBox.innerHTML = "Enter an amount";
+            this.classList.add("amount-neutral");
+        }
 
-        {% for trade in day_details %}
+        else if (amount > 0) {
+            statusBox.classList.add("status-profit");
+            statusBox.innerHTML = "PROFIT";
+            this.classList.add("amount-profit");
+        }
+        
+        else if(amount < 0) {
+            statusBox.classList.add("status-loss");
+            statusBox.innerHTML = "LOSS";
+            this.classList.add("amount-loss");
+        }
 
-        <div class="trade-details">
-
-            <p>
-                Time:
-                {{ trade.trade_time.strftime("%H:%M")}}
-            </p>
-
-            <p>
-            {% if trade.is_profit %}
-                +${{ "%.2f"|format(trade.amount) }}
-            {% else %}
-                -${{ "%.2f"|format(trade.amount|abs) }}
-            {% endif %}
-            </p>
-
-            <p>
-
-            {% if trade.followed_plan %}
-                ✅ Followed Plan
-            {% else %}
-                ❌ Didn't Follow Plan
-            {% endif %}
-
-            </p>
-
-            <p>
-                {{trade.notes}}
-            </p>
-
-            <hr>
-
-        </div>
-
-        {% endfor %}
-    </div>
-
-    {% endif %}
-
-    {% endblock %}
+        else{
+            statusBox.classList.add("status-neutral");
+            statusBox.innerHTML = "amount cannot be 0";
+            this.classList.add("amount-neutral");
+        }
+    });
+</script>
+{% endblock %}

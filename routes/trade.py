@@ -95,6 +95,7 @@ def calculate_streaks(trades):
 @trade.route("/trades/add", methods=["GET", "POST"])
 @login_required
 def add_trade():
+
     if request.method == "POST":
 
         trade_date_str = request.form.get("trade_date")
@@ -109,10 +110,19 @@ def add_trade():
             return redirect(url_for("trade.add_trade"))
 
         try:
+
             trade_date = datetime.strptime(
                 trade_date_str,
                 "%Y-%m-%d"
             ).date()
+
+            # Weekend validation
+            if trade_date.weekday() >= 5:
+                flash(
+                    "Trades cannot be logged on weekends.",
+                    "danger"
+                )
+                return redirect(url_for("trade.add_trade"))
 
             trade_time = (
                 datetime.strptime(
@@ -131,6 +141,7 @@ def add_trade():
             # Automatically determine profit/loss
             is_profit = amount > 0
 
+            # Determine if plan was followed
             followed_plan = discipline == "yes"
 
             new_trade = Trade(

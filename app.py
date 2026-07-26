@@ -222,71 +222,49 @@ def analytics():
 
 
     trades = get_trades_between(
-
-        current_user.id,
-
-        start_date,
-
-        end_date
-
-    )
-
-
+    current_user.id,
+    start_date,
+    end_date
+)
 
     accuracy = calculate_accuracy(trades)
 
-
-
     total_pnl = calculate_pnl(trades)
 
+    print("\n------ ANALYTICS TRADES ------")
 
+    for trade in trades:
+        print(
+        trade.trade_date,
+        trade.amount,
+        trade.is_profit
+    )
+
+    print("Analytics Total:", total_pnl)
+    print("-----------------------------\n")
 
     plan_discipline = calculate_plan_discipline(trades)
 
-
-
     best_day,worst_day = calculate_best_worst_day(trades)
 
-
-
     trading_hours = calculate_trading_hours(
-
         trades
-
     )
-
     daily_pnl = get_daily_pnl(trades)
 
-    
-
     return render_template(
-
         "analytics.html",
-
         trades=trades,
-
         accuracy=accuracy,
-
         total_pnl=total_pnl,
-
         plan_discipline=plan_discipline,
-
         best_day=best_day,
-
         worst_day=worst_day,
-
         trading_hours=trading_hours,
-
         daily_pnl=daily_pnl,
-
         start=start,
-
         end=end
-
     )
 
-
-
 if __name__=="__main__":
-
     app.run(debug=True)

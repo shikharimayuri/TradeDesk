@@ -135,54 +135,32 @@ def get_weekly_trade_count(user_id):
 
 def get_weekly_pnl(user_id):
 
+    monday, friday = get_current_trading_week()
 
-    
-
-
-    monday , friday = get_current_trading_week()
-
-
-
-
-
-    total = (
-
-
-        db.session.query(
-
-
-            func.sum(Trade.amount)
-
-
-        )
-
-
-        .filter(
-
-
+    trades = (
+        Trade.query.filter(
             Trade.user_id == user_id,
-
-
-            Trade.trade_date >=  monday,
-
-
+            Trade.trade_date >= monday,
             Trade.trade_date <= friday
-
-
         )
-
-
-        .scalar()
-
-
+        .order_by(Trade.trade_date)
+        .all()
     )
 
+    total = sum(float(trade.amount) for trade in trades)
 
+    print("\n------ DASHBOARD TRADES ------")
+    for trade in trades:
+        print(
+            trade.trade_date,
+            trade.amount,
+            trade.is_profit
+        )
 
+    print("Dashboard Total:", total)
+    print("-----------------------------\n")
 
-
-    return total if total else 0
-
+    return total
 
 
 

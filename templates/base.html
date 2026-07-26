@@ -15,22 +15,25 @@
 </head>
 <body>
     <nav class="navbar">
-        <div class="logo">
-            <a href="/" style="text-decoration:none;color:inherit;">
-                TradeDesk
-                </a>
-        </div>
-        <div class="nav-links">
-            <a href="/">Home</a>
-            {% if current_user.is_authenticated %}
-                <a href="/dashboard">Dashboard</a>
-                <a href="/logout">Logout</a>
-            {% else %}
-                <a href="/login">Login</a>
-                <a href="/signup">Sign Up</a>
-            {% endif %}
-        </div>
-    </nav>
+    <div class="logo">
+        <a href="/" style="text-decoration:none;color:inherit;">
+            TradeDesk
+        </a>
+    </div>
+
+    <div class="nav-links">
+        <a href="/">Home</a>
+
+        {% if current_user.is_authenticated %}
+            <a href="/dashboard">Dashboard</a>
+            <a href="/analytics">Analytics</a>
+            <a href="/logout">Logout</a>
+        {% else %}
+            <a href="/login">Login</a>
+            <a href="/signup">Sign Up</a>
+        {% endif %}
+    </div>
+</nav>
     <main class="container">
         {% with messages =  get_flashed_messages(with_categories=true) %}
             {% if messages %}

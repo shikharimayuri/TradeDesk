@@ -252,6 +252,14 @@ TradeDesk | Analytics
 
     <h2>Trading Hours</h2>
 
+    <div class="graph-card">
+
+    <h2 style="text-align:center;">Average P&L by Trading Hour</h2>
+
+    <canvas id="tradingHoursChart"></canvas>
+
+    </div>
+
     <table class="trade-table">
 
         <thead>
@@ -336,10 +344,180 @@ TradeDesk | Analytics
 
     </table>
 
-<h2>Daily Net P&L</h2>
+<div class="analytics-summary dashboard-cards">
 
-<div id="dailyPnlChart"></div>
+    <div class="stat-card">
+        <h3>💰 Average Win</h3>
+
+        <h2 class="profit">
+            +${{ "%.2f"|format(trade_stats.average_win) }}
+        </h2>
+    </div>
+
+    <div class="stat-card">
+        <h3>📉 Average Loss</h3>
+
+        <h2 class="loss">
+            -${{ "%.2f"|format(trade_stats.average_loss) }}
+        </h2>
+    </div>
+
+    <div class="stat-card">
+        <h3>⚖️ Profit Factor</h3>
+
+        <h2>
+            {{ trade_stats.profit_factor }}
+        </h2>
+    </div>
+
+    <div class="stat-card">
+        <h3>🎯 Risk : Reward</h3>
+
+        <h2>
+            1 : {{ trade_stats.risk_reward }}
+        </h2>
+    </div>
+
+</div>
+
+<div class="graph-card">
+
+    <h2 style="text-align:center;">Daily Net P&L</h2>
+
+    <canvas id="dailyPnlChart"></canvas>
+
+</div>>
+
+<div class="graph-card">
+
+    <h2 style="text-align:center;">Equity Curve</h2>
+
+    <canvas id="equityChart"></canvas>
+
+</div>
 
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+const dailyPnl = {{ daily_pnl|tojson }};
+
+new Chart(document.getElementById("dailyPnlChart"), {
+
+    type: "bar",
+
+    data: {
+        labels: dailyPnl.map(item => item.date),
+
+        datasets: [{
+            label: "Net P&L",
+            data: dailyPnl.map(item => item.pnl),
+
+            backgroundColor: dailyPnl.map(item =>
+                item.pnl >= 0 ? "#22c55e" : "#ef4444"
+            )
+        }]
+    },
+
+    options: {
+
+        responsive: true,
+
+        maintainAspectRatio: false,
+
+        scales: {
+
+            y: {
+                beginAtZero: true
+            }
+
+        }
+
+    }
+
+});
+
+const equity = {{ equity_curve|tojson }};
+
+new Chart(document.getElementById("equityChart"), {
+
+    type: "line",
+
+    data: {
+
+        labels: equity.map(item => item.date),
+
+        datasets: [{
+
+            label: "Account Growth",
+
+            data: equity.map(item => item.equity),
+
+            borderColor: "#22c55e",
+
+            backgroundColor: "#22c55e",
+
+            tension: 0.3,
+
+            fill: false
+
+        }]
+
+    },
+
+    options: {
+
+        responsive: true,
+
+        maintainAspectRatio: false
+
+    }
+
+});
+
+const tradingHours = {{ trading_hours|tojson }};
+
+new Chart(document.getElementById("tradingHoursChart"), {
+
+    type: "bar",
+
+    data: {
+
+        labels: tradingHours.map(item => item.hour + ":00"),
+
+        datasets: [{
+
+            label: "Average P&L",
+
+            data: tradingHours.map(item => item.avg_pnl),
+
+            backgroundColor: tradingHours.map(item =>
+                item.avg_pnl >= 0 ? "#22c55e" : "#ef4444"
+            )
+
+        }]
+
+    },
+
+    options: {
+
+        responsive: true,
+
+        maintainAspectRatio: false,
+
+        scales: {
+
+            y: {
+                beginAtZero: true
+            }
+
+        }
+
+    }
+
+});
+
+</script>
 
 {% endblock %}

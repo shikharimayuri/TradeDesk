@@ -165,3 +165,67 @@ def get_daily_pnl(trades):
         })
 
     return result
+
+def get_equity_curve(trades):
+
+    running_total = 0
+
+    result = []
+
+    for trade in trades:
+
+        running_total += float(trade.amount)
+
+        result.append({
+
+            "date": trade.trade_date.strftime("%d %b"),
+
+            "equity": round(running_total, 2)
+
+        })
+
+    return result
+
+def calculate_trade_statistics(trades):
+
+    profitable = [
+        float(trade.amount)
+        for trade in trades
+        if trade.is_profit
+    ]
+
+    losing = [
+        abs(float(trade.amount))
+        for trade in trades
+        if not trade.is_profit
+    ]
+
+    average_win = (
+        round(sum(profitable) / len(profitable), 2)
+        if profitable else 0
+    )
+
+    average_loss = (
+        round(sum(losing) / len(losing), 2)
+        if losing else 0
+    )
+
+    gross_profit = sum(profitable)
+    gross_loss = sum(losing)
+
+    profit_factor = (
+        round(gross_profit / gross_loss, 2)
+        if gross_loss > 0 else 0
+    )
+
+    risk_reward = (
+        round(average_win / average_loss, 2)
+        if average_loss > 0 else 0
+    )
+
+    return {
+        "average_win": average_win,
+        "average_loss": average_loss,
+        "profit_factor": profit_factor,
+        "risk_reward": risk_reward
+    }

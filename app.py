@@ -45,7 +45,9 @@ from services.analytics_service import (
     calculate_plan_discipline,
     calculate_best_worst_day,
     calculate_trading_hours,
-    get_daily_pnl
+    get_daily_pnl,
+    get_equity_curve,
+    calculate_trade_statistics
 )
 
 app=Flask(__name__)
@@ -231,6 +233,8 @@ def analytics():
 
     total_pnl = calculate_pnl(trades)
 
+    trade_stats = calculate_trade_statistics(trades)
+
     print("\n------ ANALYTICS TRADES ------")
 
     for trade in trades:
@@ -252,6 +256,8 @@ def analytics():
     )
     daily_pnl = get_daily_pnl(trades)
 
+    equity_curve = get_equity_curve(trades)
+
     return render_template(
         "analytics.html",
         trades=trades,
@@ -263,7 +269,9 @@ def analytics():
         trading_hours=trading_hours,
         daily_pnl=daily_pnl,
         start=start,
-        end=end
+        end=end,
+        equity_curve=equity_curve,
+        trade_stats=trade_stats
     )
 
 if __name__=="__main__":

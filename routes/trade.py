@@ -190,6 +190,15 @@ def edit_trade(trade_id):
             "%Y-%m-%d"
         ).date()
 
+        if trade.trade_date.weekday() >= 5:
+            flash(
+                "Trades cannot be edited to weekends.",
+                "danger"
+            )
+            return redirect(url_for("trade.edit_trade", trade_id=trade_id))
+
+        trade.trade_date=trade.trade_date
+
         trade_time = request.form.get("trade_time")
 
         trade.trade_item =(

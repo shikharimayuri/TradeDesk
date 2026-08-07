@@ -1247,3 +1247,37 @@ body{
 .graph-card canvas{
     height:350px !important;
 }
+
+.trade-actions{
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.edit-btn{
+    background: #2563eb;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.edit-btn:hover{
+    background: #1d4e1d;
+}
+
+.delete-btn{
+    background: #dc2626;
+    color: white;
+    padding:6px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 14px;
+    border:none;
+    
+}
+
+.delete-btn:hover{
+    background: #b91c1c;
+}

@@ -174,21 +174,72 @@ def add_trade():
         now_str=now_str
     )
 
+@trade.route("/trades/edit/<int:trade_id>", methods=["GET","POST"])
+@login_required
+def edit_trade(trade_id):
+
+    trade=Trade.query.filter_by(
+        id=trade_id,
+        user_id=current_user.id
+    ).first_or_404()
+
+    if request.method == "POST":
+
+        trade.trade_date = datetime.strptime(
+            request.form.get("trade_date"),
+            "%Y-%m-%d"
+        ).date()
+
+        trade_time = request.form.get("trade_time")
+
+        trade.trade_item =(
+            datetime.strptime(
+                trade_time,
+                "%H:%M"
+            ).time()
+            if trade_time else None
+        )
+
+        trade.amount=float(
+            request.form.get("amount")
+        )
+
+        trade.is_profit = trade.amount>0
+
+        trade.followed_plan = (
+            request.form.get("discipline") == "yes"
+        )
+
+        trade.notes = request.form.get("notes")
+
+        db.session.commit()
+
+        flash("Traade updated successfully", "success")
+
+        return redirect(url_for("dashboard"))
+
+    return render_template(
+        "edit_trade.html",
+        trade=trade
+    )
 
 @trade.route("/trades/delete/<int:trade_id>", methods=["POST"])
 @login_required
 def delete_trade(trade_id):
-    trade_item = Trade.query.get_or_404(trade_id)
-    if trade_item.user_id != current_user.id:
-        flash("You are not authorized to delete this trade.", "danger")
-        return redirect(url_for("dashboard"))
-        
+
+    trade_item = Trade.query.filter_by(
+        id=trade_id,
+        user_id=current_user.id
+    ).first_or_404()
+
     try:
         db.session.delete(trade_item)
         db.session.commit()
+
         flash("Trade deleted successfully.", "success")
+
     except Exception as e:
         db.session.rollback()
         flash(f"Error deleting trade: {str(e)}", "danger")
-        
+
     return redirect(url_for("dashboard"))

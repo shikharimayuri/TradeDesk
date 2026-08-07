@@ -378,6 +378,20 @@ TradeDesk | Analytics
         </h2>
     </div>
 
+    <div class="stat-card">
+    <h3>📉 Maximum Drawdown</h3>
+
+    {% if max_drawdown > 0 %}
+        <h2 class="loss">
+            -${{ "%.2f"|format(max_drawdown) }}
+        </h2>
+    {% else %}
+        <h2 class="neutral">
+            $0.00
+        </h2>
+    {% endif %}
+</div>
+
 </div>
 
 <div class="graph-card">

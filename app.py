@@ -1,29 +1,16 @@
 from flask import Flask,render_template, request
-
 from config import Config
-
 from extensions import db, bcrypt
-
 from login_manager import login_manager
-
 from routes.auth import auth
-
 from flask_login import login_required, current_user
-
 from models.user import User
-
 from models.trade import Trade
-
 from flask_migrate import Migrate
-
 from routes.trade import trade
-
 from calendar import monthrange, month_name
-
 from datetime import date,datetime
-
 from services.dashboard_service import (
-
     get_recent_trades,
     get_weekly_trade_count,
     get_weekly_pnl,
@@ -37,7 +24,6 @@ from services.dashboard_service import (
     get_weekly_win_loss,
     get_weekly_trade_graph
 )
-
 from services.analytics_service import (
     get_trades_between,
     calculate_accuracy,
@@ -47,7 +33,8 @@ from services.analytics_service import (
     calculate_trading_hours,
     get_daily_pnl,
     get_equity_curve,
-    calculate_trade_statistics
+    calculate_trade_statistics,
+    calculate_max_drawdown
 )
 
 app=Flask(__name__)
@@ -257,6 +244,8 @@ def analytics():
     daily_pnl = get_daily_pnl(trades)
 
     equity_curve = get_equity_curve(trades)
+    
+    max_drawdown = calculate_max_drawdown(trades)
 
     return render_template(
         "analytics.html",
@@ -271,7 +260,8 @@ def analytics():
         start=start,
         end=end,
         equity_curve=equity_curve,
-        trade_stats=trade_stats
+        trade_stats=trade_stats,
+        max_drawdown=max_drawdown
     )
 
 if __name__=="__main__":

@@ -186,6 +186,29 @@ def get_equity_curve(trades):
 
     return result
 
+def calculate_max_drawdown(trades):
+
+    if not trades:
+        return 0
+
+    running_total = 0
+    peak = 0
+    max_drawdown = 0
+
+    for trade in trades:
+
+        running_total += float(trade.amount)
+
+        if running_total > peak:
+            peak = running_total
+
+        drawdown = peak - running_total
+
+        if drawdown > max_drawdown:
+            max_drawdown = drawdown
+
+    return round(max_drawdown, 2)
+
 def calculate_trade_statistics(trades):
 
     profitable = [

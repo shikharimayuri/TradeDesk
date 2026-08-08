@@ -392,6 +392,30 @@ TradeDesk | Analytics
     {% endif %}
 </div>
 
+<div class="stat-card">
+    <h3>🔴 Max Losing Streak</h3>
+
+    <h2 class="loss">
+        {{ max_consecutive_losses }}
+    </h2>
+
+    <p style="margin-top: 10px; color: #94a3b8; font-size: 14px;">
+        Consecutive losing trades
+    </p>
+</div>
+
+<div class="stat-card">
+    <h3>📉 Loss Rate</h3>
+
+    <h2 class="loss">
+        {{ loss_rate }}%
+    </h2>
+
+    <p style="margin-top: 10px; color: #94a3b8; font-size: 14px;">
+        Losing trades
+    </p>
+</div>
+
 </div>
 
 <div class="graph-card">

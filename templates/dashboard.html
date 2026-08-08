@@ -6,6 +6,7 @@ TradeDesk | Dashboard
 
 {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <div class="dashboard-header">
     <div>
         <h1>Dashboard</h1>
@@ -21,7 +22,6 @@ TradeDesk | Dashboard
 <hr class="dashboard-divider">
 
 <div class="dashboard-cards">
-
     <div class="stat-card">
         <h3>🔥 Current Streak</h3>
         <h2>{{current_streak}}</h2>
@@ -29,9 +29,7 @@ TradeDesk | Dashboard
 
     <div class="stat-card">
         <h3>🎯 Accuracy</h3>
-        <h2>
-            {{ weekly_accuracy}}%
-        </h2>
+        <h2>{{ weekly_accuracy }}%</h2>
     </div>
 
     <div class="stat-card">
@@ -41,16 +39,15 @@ TradeDesk | Dashboard
             <span class="profit">
                 ▲ +${{ "{:,.2f}".format(weekly_pnl) }}
             </span>
-
-            {% elif weekly_pnl < 0 %} <span class="loss">
+            {% elif weekly_pnl < 0 %}
+            <span class="loss">
                 ▼ -${{ "{:,.2f}".format(weekly_pnl|abs) }}
-                </span>
-
-                {% else %}
-                <span class="neutral">
-                    $0.00
-                </span>
-                {% endif %}
+            </span>
+            {% else %}
+            <span class="neutral">
+                $0.00
+            </span>
+            {% endif %}
         </h2>
     </div>
 
@@ -58,7 +55,6 @@ TradeDesk | Dashboard
         <h3>📊 Total Trades</h3>
         <h2>{{weekly_trade_count}}</h2>
     </div>
-
 </div>
 
 <h2 class="section-title">Recent Trades</h2>
@@ -72,83 +68,54 @@ TradeDesk | Dashboard
             <th>Actions</th>
         </tr>
     </thead>
-
     <tbody>
-
         {% for trade in recent_trades %}
-
         <tr>
-
             <td>{{ trade.trade_date }}</td>
-
             <td>{{ trade.trade_time.strftime('%H:%M') if trade.trade_time else '-' }}</td>
-
             <td>
-
                 {% if trade.amount > 0 %}
-
                 <span class="profit">
                     +${{ "%.2f"|format(trade.amount) }}
                 </span>
-
-                {% elif trade.amount < 0 %} <span class="loss">
+                {% elif trade.amount < 0 %}
+                <span class="loss">
                     -${{ "%.2f"|format(trade.amount|abs) }}
-                    </span>
-
-                    {% else %}
-
-                    <span class="neutral">
-                        $0.00
-                    </span>
-
-                    {% endif %}
-            </td>
-
-            <td>
-                {% if trade.followed_plan %}
-                ✅
+                </span>
                 {% else %}
-                ❌
+                <span class="neutral">
+                    $0.00
+                </span>
                 {% endif %}
             </td>
-
-            <td class="trade-actions">
-                <a
-                  href="{{ url_for('trade.edit_trade',trade_id=trade.id)}}"
-                  class="edit-btn"
-                >
-                ✏️ Edit
-            </a>
-            <form
-                action="{{url_for('trade.delete_trade', trade_id=trade.id)}}"
-                method="POST"
-                style="display: inline;"
-                onsubmit="return confirm('Are you sure you want to delete this trade ?');"
-                >
-            <button type="submit" class="delete-btn">
-                🗑 Delete
-            </button>
-            </form>
+            <td>
+                {% if trade.followed_plan %}
+                <span class="badge badge-success"><span class="badge-dot"></span> Followed</span>
+                {% else %}
+                <span class="badge badge-danger"><span class="badge-dot"></span> Broken</span>
+                {% endif %}
             </td>
-
+            <td class="trade-actions">
+                <a href="{{ url_for('trade.edit_trade', trade_id=trade.id) }}" class="edit-btn">
+                    Edit
+                </a>
+                <form action="{{ url_for('trade.delete_trade', trade_id=trade.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this trade?');">
+                    <button type="submit" class="delete-btn">
+                        Delete
+                    </button>
+                </form>
+            </td>
         </tr>
-
         {% endfor %}
-
     </tbody>
-
 </table>
 
 <div class="calendar-card">
-
     <div class="calendar-header">
-
-        <a href="{{url_for('dashboard', year=prev_year,month=prev_month)}}" class="calendar-btn">
+        <a href="{{url_for('dashboard', year=prev_year, month=prev_month)}}" class="calendar-btn">
             &#10094;
         </a>
-
         <h3>{{current_month}} {{ current_year }}</h3>
-
         <a href="{{url_for('dashboard', year=next_year, month=next_month)}}" class="calendar-btn">
             &#10095;
         </a>
@@ -166,75 +133,44 @@ TradeDesk | Dashboard
 
     <div class="calendar-grid">
         {% for cell in calendar_data %}
-
-        {% if cell is none %}
-
-        <div class="calendar-empty"></div>
-
-        {% else %}
-
-        {% set day = cell.date %}
-        {% set info = cell.info %}
-
-        <a 
-            href="{{url_for('dashboard',
-            year=current_year,
-            month=current_month_number,
-            selected=day.strftime('%Y-%m-%d')
-            )}}"
-            class="calendar-link"
-        >
-
-        <div class="calendar-day {{info.status}}{% if selected_date == day %} selected{% endif %}">
-
-            <div class="day-number">
-                {{day.day}}
-            </div>
-
-            {% if info.status == "success" or info.status == "failure" %}
-
-            <div class="day-trades">
-                {{info.trades}} Trades
-            </div>
-
-            <div class="day-pnl">
-
-                {% if info.pnl >= 0 %}
-                +${{ "%.2f"|format(info.pnl) }}
-                {% else %}
-                -${{ "%.2f"|format(info.pnl|abs) }}
-                {% endif %}
-
-            </div>
-
-            {% elif info.status == "weekend" %}
-
-            <div class="day-empty">
-                Weekend
-            </div>
-
-            {% elif info.status == "no_trade" %}
-
-            <div class="day-empty">
-                No Trade
-            </div>
-
+            {% if cell is none %}
+                <div class="calendar-empty"></div>
+            {% else %}
+                {% set day = cell.date %}
+                {% set info = cell.info %}
+                <a href="{{url_for('dashboard', year=current_year, month=current_month_number, selected=day.strftime('%Y-%m-%d'))}}" class="calendar-link">
+                    <div class="calendar-day {{info.status}}{% if selected_date == day %} selected{% endif %}">
+                        <div class="day-number">
+                            {{day.day}}
+                        </div>
+                        {% if info.status == "success" or info.status == "failure" %}
+                            <div class="day-trades">
+                                {{info.trades}} Trades
+                            </div>
+                            <div class="day-pnl">
+                                {% if info.pnl >= 0 %}
+                                    +${{ "%.2f"|format(info.pnl) }}
+                                {% else %}
+                                    -${{ "%.2f"|format(info.pnl|abs) }}
+                                {% endif %}
+                            </div>
+                        {% elif info.status == "weekend" %}
+                            <div class="day-empty">
+                                Weekend
+                            </div>
+                        {% elif info.status == "no_trade" %}
+                            <div class="day-empty">
+                                No Trade
+                            </div>
+                        {% endif %}
+                    </div>
+                </a>
             {% endif %}
-
-        </div>
-
-        </a>
-
-        {% endif %}
-
         {% endfor %}
-
     </div>
 
     {% if day_summary %}
-
     <div class="summary-card">
-
         <div class="summary-item">
             <h4>Trades</h4>
             <p>{{ day_summary.total_trades }}</p>
@@ -242,20 +178,15 @@ TradeDesk | Dashboard
 
         <div class="summary-item">
             <h4>Net P&L</h4>
-
             {% if day_summary.total_pnl >= 0 %}
-
                 <p class="profit">
                     +${{ "%.2f"|format(day_summary.total_pnl) }}
                 </p>
-            
             {% else %}
-
                 <p class="loss">
                     -${{ "%.2f"|format(day_summary.total_pnl|abs) }}
                 </p>
             {% endif %}
-
         </div>
 
         <div class="summary-item">
@@ -272,140 +203,136 @@ TradeDesk | Dashboard
             <h4>Status</h4>
             <p>{{ day_summary.status }}</p>
         </div>
-
     </div>
-
-{% endif %}
+    {% endif %}
 
     {% if day_details %}
-
     <div class="day-details-card">
-
         <h2>
             {{selected_date.strftime("%d %B %Y")}}
         </h2>
 
         {% for trade in day_details %}
-
         <div class="trade-details">
-
             <p>
-                Time:
-                {{ trade.trade_time.strftime("%H:%M")}}
+                <strong>Time:</strong> {{ trade.trade_time.strftime("%H:%M")}}
             </p>
-
             <p>
-            {% if trade.is_profit %}
-                +${{ "%.2f"|format(trade.amount) }}
-            {% else %}
-                -${{ "%.2f"|format(trade.amount|abs) }}
-            {% endif %}
+                {% if trade.is_profit %}
+                    <span class="profit">+${{ "%.2f"|format(trade.amount) }}</span>
+                {% else %}
+                    <span class="loss">-${{ "%.2f"|format(trade.amount|abs) }}</span>
+                {% endif %}
             </p>
-
             <p>
-
-            {% if trade.followed_plan %}
-                ✅ Followed Plan
-            {% else %}
-                ❌ Didn't Follow Plan
-            {% endif %}
-
+                {% if trade.followed_plan %}
+                    <span class="badge badge-success"><span class="badge-dot"></span> Followed Plan</span>
+                {% else %}
+                    <span class="badge badge-danger"><span class="badge-dot"></span> Broken Plan</span>
+                {% endif %}
             </p>
-
             <p>
                 {{trade.notes}}
             </p>
-
-            <hr>
-
         </div>
-
         {% endfor %}
     </div>
-
     {% endif %}
-
-<div class="graph-card">
-
-    <h2>Weekly P&L</h2>
-
-    <canvas id="weeklyPnlChart"></canvas>
-
 </div>
 
-<div class="graph-card">
-
-    <h2>Weekly Accuracy</h2>
-
-    <canvas id="weeklyAccuracyChart"></canvas>
-
-</div>
-
-<div class="graph-card">
-    <h2>Win vs Loss</h2>
-
-    <div class="chart-center">
-        <canvas id="winLossChart"></canvas>
+<!-- Charts Grid Layout -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 24px; margin-top: 30px;">
+    <div class="graph-card">
+        <h2>Weekly P&L</h2>
+        <canvas id="weeklyPnlChart"></canvas>
     </div>
-</div>
 
-<div class="graph-card">
+    <div class="graph-card">
+        <h2>Weekly Accuracy</h2>
+        <canvas id="weeklyAccuracyChart"></canvas>
+    </div>
 
-    <h2>Weekly Trade Activity</h2>
+    <div class="graph-card">
+        <h2>Win vs Loss</h2>
+        <div class="chart-center">
+            <canvas id="winLossChart"></canvas>
+        </div>
+    </div>
 
-    <canvas id="weeklyTradeChart"></canvas>
-
+    <div class="graph-card">
+        <h2>Weekly Trade Activity</h2>
+        <canvas id="weeklyTradeChart"></canvas>
+    </div>
 </div>
 
 <script>
+// ChartJS Global Dark Style Overrides
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.font.family = "'Inter', sans-serif";
+const gridConfig = {
+    color: 'rgba(255, 255, 255, 0.05)',
+    drawBorder: false
+};
 
 const weeklyData = {{ weekly_pnl_graph|tojson }};
-
 const labels = weeklyData.map(item => item.day);
 const values = weeklyData.map(item => item.pnl);
 
 new Chart(document.getElementById("weeklyPnlChart"), {
-
     type: "bar",
-
     data: {
         labels: labels,
         datasets: [{
             label: "Profit / Loss",
-            data: values
+            data: values,
+            backgroundColor: values.map(val => val >= 0 ? '#10b981' : '#ef4444'),
+            borderRadius: 4,
+            borderWidth: 0
         }]
     },
-
     options: {
         responsive: true,
-        maintainAspectRatio: false
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            x: { grid: gridConfig },
+            y: { grid: gridConfig }
+        }
     }
-
 });
 
 const weeklyAccuracy = {{ weekly_accuracy_graph|tojson }};
 
-const ctx2 = document.getElementById("weeklyAccuracyChart");
-
-new Chart(ctx2, {
+new Chart(document.getElementById("weeklyAccuracyChart"), {
     type: "line",
-
     data: {
         labels: weeklyAccuracy.map(x => x.day),
-
         datasets: [{
             label: "Accuracy (%)",
             data: weeklyAccuracy.map(x => x.accuracy),
             borderColor: "#3b82f6",
-            backgroundColor: "#3b82f6",
-            tension: 0.3
+            backgroundColor: "rgba(59, 130, 246, 0.15)",
+            tension: 0.3,
+            fill: true,
+            pointBackgroundColor: "#3b82f6",
+            pointBorderColor: "#131b2e",
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            pointHoverRadius: 7
         }]
     },
-
     options: {
         responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false }
+        },
         scales: {
+            x: { grid: gridConfig },
             y: {
+                grid: gridConfig,
                 beginAtZero: true,
                 max: 100
             }
@@ -416,95 +343,75 @@ new Chart(ctx2, {
 const winLoss = {{ weekly_win_loss|tojson }};
 
 new Chart(document.getElementById("winLossChart"), {
-
     type: "doughnut",
-
     data: {
         labels: [
             `Wins (${winLoss.win_percent}%)`,
             `Losses (${winLoss.loss_percent}%)`
         ],
-
         datasets: [{
             data: [
                 winLoss.wins,
                 winLoss.losses
             ],
-
             backgroundColor: [
-                "#22c55e",
+                "#10b981",
                 "#ef4444"
             ],
-
-            borderWidth: 1
+            borderWidth: 3,
+            borderColor: "#131b2e"
         }]
     },
-
     options: {
         responsive: true,
-
+        cutout: '75%',
         plugins: {
             legend: {
-                position: "bottom"
+                position: "bottom",
+                labels: { padding: 20 }
             },
-
             tooltip: {
                 callbacks: {
                     label: function(context) {
-
                         if (context.dataIndex === 0) {
-                            return `Wins: ${winLoss.wins} (${winLoss.win_percent}%)`;
+                            return ` Wins: ${winLoss.wins} (${winLoss.win_percent}%)`;
                         }
-
-                        return `Losses: ${winLoss.losses} (${winLoss.loss_percent}%)`;
+                        return ` Losses: ${winLoss.losses} (${winLoss.loss_percent}%)`;
                     }
                 }
             }
         }
     }
-
 });
 
 const weeklyTrades = {{ weekly_trade_graph|tojson }};
 
 new Chart(document.getElementById("weeklyTradeChart"), {
-
     type: "bar",
-
     data: {
-
         labels: weeklyTrades.map(x => x.day),
-
         datasets: [{
-
             label: "Trades",
-
             data: weeklyTrades.map(x => x.trades),
-
-            backgroundColor: "#6366f1"
-
+            backgroundColor: "rgba(99, 102, 241, 0.8)",
+            borderRadius: 4
         }]
     },
-
     options: {
-
         responsive: true,
-
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false }
+        },
         scales: {
-
+            x: { grid: gridConfig },
             y: {
-
+                grid: gridConfig,
                 beginAtZero: true,
-
-                ticks: {
-                    precision: 0
-                }
+                ticks: { precision: 0 }
             }
         }
     }
-
 });
-
 </script>
-
-    {% endblock %}
+{% endblock %}

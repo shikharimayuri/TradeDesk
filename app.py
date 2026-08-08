@@ -34,7 +34,9 @@ from services.analytics_service import (
     get_daily_pnl,
     get_equity_curve,
     calculate_trade_statistics,
-    calculate_max_drawdown
+    calculate_max_drawdown,
+    calculate_max_consecutive_losses,
+    calculate_loss_rate
 )
 
 app=Flask(__name__)
@@ -247,6 +249,10 @@ def analytics():
     
     max_drawdown = calculate_max_drawdown(trades)
 
+    max_consecutive_losses = calculate_max_consecutive_losses(trades)
+
+    loss_rate = calculate_loss_rate(trades)
+
     return render_template(
         "analytics.html",
         trades=trades,
@@ -261,7 +267,9 @@ def analytics():
         end=end,
         equity_curve=equity_curve,
         trade_stats=trade_stats,
-        max_drawdown=max_drawdown
+        max_drawdown=max_drawdown,
+        max_consecutive_losses = max_consecutive_losses,
+        loss_rate = loss_rate
     )
 
 if __name__=="__main__":

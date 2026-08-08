@@ -209,6 +209,43 @@ def calculate_max_drawdown(trades):
 
     return round(max_drawdown, 2)
 
+def calculate_max_consecutive_losses(trades):
+
+    if not trades:
+        return 0
+
+    current_streak = 0
+    max_streak = 0
+
+    for trade in trades:
+
+        if not trade.is_profit:
+            current_streak = current_streak+1;
+
+            if current_streak > max_streak:
+                max_streak = current_streak
+
+        else:
+            current_streak = 0
+
+    return max_streak
+
+def calculate_loss_rate(trades):
+
+    if not trades:
+        return 0
+
+    losing_trades = sum(
+        1 for trade in trades
+        if not trade.is_profit
+    )
+
+    loss_rate = (
+        losing_trades / len(trades)
+    ) * 100
+
+    return round(loss_rate, 2)
+
 def calculate_trade_statistics(trades):
 
     profitable = [

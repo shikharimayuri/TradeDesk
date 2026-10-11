@@ -1,4 +1,4 @@
-from flask import Flask,render_template, request
+from flask import Flask, render_template, request
 from config import Config
 from extensions import db, bcrypt
 from login_manager import login_manager
@@ -9,7 +9,7 @@ from models.trade import Trade
 from flask_migrate import Migrate
 from routes.trade import trade
 from calendar import monthrange, month_name
-from datetime import date,datetime
+from datetime import date, datetime
 from services.dashboard_service import (
     get_recent_trades,
     get_weekly_trade_count,
@@ -39,31 +39,29 @@ from services.analytics_service import (
     calculate_loss_rate
 )
 
-app=Flask(__name__)
+app = Flask(__name__)
 app.config.from_object(Config)
 
 db.init_app(app)
 bcrypt.init_app(app)
 login_manager.init_app(app)
-migrate = Migrate(app,db)
+migrate = Migrate(app, db)
 
 app.register_blueprint(auth)
 app.register_blueprint(trade)
 
+
 @app.route("/")
 def home():
-
     return render_template("index.html")
+
 
 @app.route("/dashboard")
 @login_required
 def dashboard():
-
     recent_trades = get_recent_trades(current_user.id)
-    print("RECENT:", recent_trades)
 
     weekly_trade_count = get_weekly_trade_count(current_user.id)
-    print("WEEKLY COUNT:", weekly_trade_count)
 
     weekly_pnl = get_weekly_pnl(current_user.id)
 
@@ -78,11 +76,9 @@ def dashboard():
     weekly_trade_graph = get_weekly_trade_graph(current_user.id)
 
     wins = weekly_win_loss["wins"]
-  
     losses = weekly_win_loss["losses"]
 
     current_streak = get_current_streak(current_user.id)
-    print("CURRENT STREAK:", current_streak)
 
     today = date.today()
 
@@ -109,11 +105,6 @@ def dashboard():
         year,
         month
     )
-
-    print("CALENDAR CELLS:", len(calendar_data))
-    print("FIRST 10 CELLS:")
-    for cell in calendar_data[:10]:
-        print(cell)
 
     selected_date = None
 
@@ -158,65 +149,42 @@ def dashboard():
         day_details=day_details,
         day_summary=day_summary,
         weekly_pnl_graph=weekly_pnl_graph,
-        weekly_accuracy_graph = weekly_accuracy_graph,
+        weekly_accuracy_graph=weekly_accuracy_graph,
         weekly_win_loss=weekly_win_loss,
         weekly_trade_graph=weekly_trade_graph,
     )
 
+
 @app.route("/analytics")
-
 @login_required
-
 def analytics():
     today = date.today()
 
-
-
     start = request.args.get(
-
         "start",
-
-            default=today.replace(day=1).strftime("%Y-%m-%d")
-
+        default=today.replace(day=1).strftime("%Y-%m-%d")
     )
-
-
 
     end = request.args.get(
-
         "end",
-
         default=today.strftime("%Y-%m-%d")
-
     )
 
-
-
     start_date = datetime.strptime(
-
         start,
-
         "%Y-%m-%d"
-
     ).date()
-
-
 
     end_date = datetime.strptime(
-
         end,
-
         "%Y-%m-%d"
-
     ).date()
 
-
-
     trades = get_trades_between(
-    current_user.id,
-    start_date,
-    end_date
-)
+        current_user.id,
+        start_date,
+        end_date
+    )
 
     accuracy = calculate_accuracy(trades)
 
@@ -224,29 +192,16 @@ def analytics():
 
     trade_stats = calculate_trade_statistics(trades)
 
-    print("\n------ ANALYTICS TRADES ------")
-
-    for trade in trades:
-        print(
-        trade.trade_date,
-        trade.amount,
-        trade.is_profit
-    )
-
-    print("Analytics Total:", total_pnl)
-    print("-----------------------------\n")
-
     plan_discipline = calculate_plan_discipline(trades)
 
-    best_day,worst_day = calculate_best_worst_day(trades)
+    best_day, worst_day = calculate_best_worst_day(trades)
 
-    trading_hours = calculate_trading_hours(
-        trades
-    )
+    trading_hours = calculate_trading_hours(trades)
+
     daily_pnl = get_daily_pnl(trades)
 
     equity_curve = get_equity_curve(trades)
-    
+
     max_drawdown = calculate_max_drawdown(trades)
 
     max_consecutive_losses = calculate_max_consecutive_losses(trades)
@@ -268,9 +223,10 @@ def analytics():
         equity_curve=equity_curve,
         trade_stats=trade_stats,
         max_drawdown=max_drawdown,
-        max_consecutive_losses = max_consecutive_losses,
-        loss_rate = loss_rate
+        max_consecutive_losses=max_consecutive_losses,
+        loss_rate=loss_rate
     )
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     app.run(debug=True)

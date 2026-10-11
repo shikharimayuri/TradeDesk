@@ -1,157 +1,145 @@
+
+import math
+from datetime import datetime, date, time, timedelta
+
 from flask import Blueprint, render_template, request, redirect, flash, url_for
 from flask_login import login_required, current_user
+
 from extensions import db
 from models.trade import Trade
-from datetime import datetime, date, time, timedelta
+
 
 trade = Blueprint("trade", __name__)
 
+
 def is_consecutive(d1, d2):
-    """
-    Determines if two dates are consecutive, accounting for weekends
-    (i.e., Friday to Monday is considered consecutive).
+    """Return whether two dates are consecutive trading days,
+    treating Friday-to-Monday as consecutive.
     """
     if d1 > d2:
         d1, d2 = d2, d1
-    
+
     diff = (d2 - d1).days
+
     if diff <= 1:
         return True
-    
-    # If d1 is Friday (4) and d2 is Monday (0) and gap is 3 days
+
     if d1.weekday() == 4 and d2.weekday() == 0 and diff <= 3:
         return True
-    
-    # If d1 is Saturday (5) or Sunday (6) and d2 is Monday (0)
+
     if d1.weekday() in (5, 6) and d2.weekday() == 0 and diff <= 2:
         return True
-        
+
     return False
 
+
 def calculate_streaks(trades):
-    """
-    Calculates the current streak and longest streak of disciplined trading days.
-    A day is disciplined if the user logged at least one trade and ALL trades on
-    that day followed the plan (followed_plan == True).
+    """Calculate current and longest streaks of disciplined trading days.
+    A day is disciplined only when every trade that day followed the plan.
     """
     if not trades:
         return 0, 0
 
-    # Group trades by date to determine if each day was disciplined
     daily_status = {}
-    for t in trades:
-        d = t.trade_date
-        if d not in daily_status:
-            daily_status[d] = True
-        # If any trade on this day did not follow the plan, the whole day is undisciplined
-        if t.followed_plan is False:
-            daily_status[d] = False
 
-    # Sort the unique trading dates ascending
+    for trade_item in trades:
+        trade_date = trade_item.trade_date
+
+        if trade_date not in daily_status:
+            daily_status[trade_date] = True
+
+        if trade_item.followed_plan is False:
+            daily_status[trade_date] = False
+
     sorted_dates = sorted(daily_status.keys())
-    
+
     streaks = []
     current_streak_dates = []
-    
-    for d in sorted_dates:
-        if daily_status[d]: # Disciplined day
+
+    for trade_date in sorted_dates:
+        if daily_status[trade_date]:
             if not current_streak_dates:
-                current_streak_dates.append(d)
+                current_streak_dates.append(trade_date)
             else:
-                last_d = current_streak_dates[-1]
-                if is_consecutive(last_d, d):
-                    current_streak_dates.append(d)
+                last_date = current_streak_dates[-1]
+
+                if is_consecutive(last_date, trade_date):
+                    current_streak_dates.append(trade_date)
                 else:
                     streaks.append(current_streak_dates)
-                    current_streak_dates = [d]
-        else: # Undisciplined day breaks the streak
+                    current_streak_dates = [trade_date]
+        else:
             if current_streak_dates:
                 streaks.append(current_streak_dates)
                 current_streak_dates = []
-                
+
     if current_streak_dates:
         streaks.append(current_streak_dates)
-        
-    # Longest streak is the max length of any compiled streak
-    longest_streak = max(len(s) for s in streaks) if streaks else 0
-    
-    # Current streak calculation
+
+    longest_streak = max((len(streak) for streak in streaks), default=0)
+
     current_streak = 0
-    if streaks and sorted_dates:
-        last_trade_date = sorted_dates[-1]
-        today = date.today()
-        
-        # Check if the streak is still active (i.e. the last trade was today, yesterday, or over the weekend)
-        is_active = (last_trade_date >= today) or is_consecutive(last_trade_date, today)
-        
-        # Find if the last compiled streak contains the last trade date
-        last_streak = streaks[-1]
-        if is_active and last_trade_date in last_streak:
-            current_streak = len(last_streak)
-            
+    last_trade_date = sorted_dates[-1]
+    today = date.today()
+
+    # Do not allow a future-dated trade to activate the current streak.
+    is_active = (
+        last_trade_date <= today
+        and is_consecutive(last_trade_date, today)
+    )
+
+    if streaks and is_active and last_trade_date in streaks[-1]:
+        current_streak = len(streaks[-1])
+
     return current_streak, longest_streak
+
+
+def parse_trade_form():
+    """Validate and parse submitted trade form fields."""
+    trade_date_str = request.form.get("trade_date", "").strip()
+    trade_time_str = request.form.get("trade_time", "").strip()
+    amount_str = request.form.get("amount", "").strip()
+    discipline = request.form.get("discipline", "").strip()
+
+    if not trade_date_str or not amount_str or discipline not in ("yes", "no"):
+        raise ValueError("Please fill in all required fields.")
+
+    trade_date = datetime.strptime(trade_date_str, "%Y-%m-%d").date()
+
+    if trade_date.weekday() >= 5:
+        raise ValueError("Trades cannot be logged on weekends.")
+
+    trade_time = (
+        datetime.strptime(trade_time_str, "%H:%M").time()
+        if trade_time_str
+        else None
+    )
+
+    amount = float(amount_str)
+
+    if not math.isfinite(amount) or amount == 0:
+        raise ValueError("Amount must be a valid, non-zero number.")
+
+    return {
+        "trade_date": trade_date,
+        "trade_time": trade_time,
+        "amount": amount,
+        "is_profit": amount > 0,
+        "followed_plan": discipline == "yes",
+        "notes": request.form.get("notes", "").strip() or None,
+    }
 
 
 @trade.route("/trades/add", methods=["GET", "POST"])
 @login_required
 def add_trade():
-
     if request.method == "POST":
-
-        trade_date_str = request.form.get("trade_date")
-        trade_time_str = request.form.get("trade_time")
-        amount_str = request.form.get("amount")
-        discipline = request.form.get("discipline")
-        notes = request.form.get("notes")
-
-        # Required field validation
-        if not trade_date_str or not amount_str or not discipline:
-            flash("Please fill in all required fields.", "danger")
-            return redirect(url_for("trade.add_trade"))
-
         try:
-
-            trade_date = datetime.strptime(
-                trade_date_str,
-                "%Y-%m-%d"
-            ).date()
-
-            # Weekend validation
-            if trade_date.weekday() >= 5:
-                flash(
-                    "Trades cannot be logged on weekends.",
-                    "danger"
-                )
-                return redirect(url_for("trade.add_trade"))
-
-            trade_time = (
-                datetime.strptime(
-                    trade_time_str,
-                    "%H:%M"
-                ).time()
-                if trade_time_str else None
-            )
-
-            amount = float(amount_str)
-
-            if amount == 0:
-                flash("Amount cannot be zero.", "danger")
-                return redirect(url_for("trade.add_trade"))
-
-            # Automatically determine profit/loss
-            is_profit = amount > 0
-
-            # Determine if plan was followed
-            followed_plan = discipline == "yes"
+            values = parse_trade_form()
 
             new_trade = Trade(
                 user_id=current_user.id,
-                trade_date=trade_date,
-                trade_time=trade_time,
-                amount=amount,
-                is_profit=is_profit,
-                followed_plan=followed_plan,
-                notes=notes
+                **values
             )
 
             db.session.add(new_trade)
@@ -160,9 +148,14 @@ def add_trade():
             flash("Trade logged successfully!", "success")
             return redirect(url_for("dashboard"))
 
-        except Exception as e:
+        except ValueError as error:
             db.session.rollback()
-            flash(f"Error logging trade: {e}", "danger")
+            flash(str(error), "danger")
+            return redirect(url_for("trade.add_trade"))
+
+        except Exception:
+            db.session.rollback()
+            flash("Unable to log the trade. Please try again.", "danger")
             return redirect(url_for("trade.add_trade"))
 
     today_str = date.today().strftime("%Y-%m-%d")
@@ -174,68 +167,50 @@ def add_trade():
         now_str=now_str
     )
 
-@trade.route("/trades/edit/<int:trade_id>", methods=["GET","POST"])
+
+@trade.route("/trades/edit/<int:trade_id>", methods=["GET", "POST"])
 @login_required
 def edit_trade(trade_id):
-
-    trade=Trade.query.filter_by(
+    trade_item = Trade.query.filter_by(
         id=trade_id,
         user_id=current_user.id
     ).first_or_404()
 
     if request.method == "POST":
+        try:
+            values = parse_trade_form()
 
-        trade.trade_date = datetime.strptime(
-            request.form.get("trade_date"),
-            "%Y-%m-%d"
-        ).date()
+            trade_item.trade_date = values["trade_date"]
+            trade_item.trade_time = values["trade_time"]
+            trade_item.amount = values["amount"]
+            trade_item.is_profit = values["is_profit"]
+            trade_item.followed_plan = values["followed_plan"]
+            trade_item.notes = values["notes"]
 
-        if trade.trade_date.weekday() >= 5:
-            flash(
-                "Trades cannot be edited to weekends.",
-                "danger"
-            )
+            db.session.commit()
+
+            flash("Trade updated successfully.", "success")
+            return redirect(url_for("dashboard"))
+
+        except ValueError as error:
+            db.session.rollback()
+            flash(str(error), "danger")
             return redirect(url_for("trade.edit_trade", trade_id=trade_id))
 
-        trade.trade_date=trade.trade_date
-
-        trade_time = request.form.get("trade_time")
-
-        trade.trade_item =(
-            datetime.strptime(
-                trade_time,
-                "%H:%M"
-            ).time()
-            if trade_time else None
-        )
-
-        trade.amount=float(
-            request.form.get("amount")
-        )
-
-        trade.is_profit = trade.amount>0
-
-        trade.followed_plan = (
-            request.form.get("discipline") == "yes"
-        )
-
-        trade.notes = request.form.get("notes")
-
-        db.session.commit()
-
-        flash("Traade updated successfully", "success")
-
-        return redirect(url_for("dashboard"))
+        except Exception:
+            db.session.rollback()
+            flash("Unable to update the trade. Please try again.", "danger")
+            return redirect(url_for("trade.edit_trade", trade_id=trade_id))
 
     return render_template(
         "edit_trade.html",
-        trade=trade
+        trade=trade_item
     )
+
 
 @trade.route("/trades/delete/<int:trade_id>", methods=["POST"])
 @login_required
 def delete_trade(trade_id):
-
     trade_item = Trade.query.filter_by(
         id=trade_id,
         user_id=current_user.id
@@ -247,8 +222,8 @@ def delete_trade(trade_id):
 
         flash("Trade deleted successfully.", "success")
 
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        flash(f"Error deleting trade: {str(e)}", "danger")
+        flash("Unable to delete the trade. Please try again.", "danger")
 
     return redirect(url_for("dashboard"))

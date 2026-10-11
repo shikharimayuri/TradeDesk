@@ -10,6 +10,7 @@ TradeDesk | Log Trade
         <p class="auth-subtitle">Record your session to maintain your consistency streak</p>
         
         <form class="auth-form" action="{{ url_for('trade.add_trade') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="form-group">
                     <label for="trade_date">Date *</label>

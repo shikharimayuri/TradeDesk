@@ -8,6 +8,15 @@ load_dotenv()
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY")
 
+    if not SECRET_KEY:
+        raise RuntimeError("SECRET_KEY environment variable is not configured.")
+
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_SECURE = (
+        os.getenv("SESSION_COOKIE_SECURE", "false").lower() == "true"
+    )
+
     DATABASE_URL = os.getenv("DATABASE_URL")
 
     if DATABASE_URL:

@@ -9,6 +9,7 @@ TradeDesk | Sign Up
         <h2>Create Account</h2>
         <p class="auth-subtitle">Join TradeDesk and start trading with discipline</p>
         <form class="auth-form" action="/signup" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" placeholder="trader123" required>

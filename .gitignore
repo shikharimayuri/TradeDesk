@@ -4,3 +4,4 @@ __pycache__/
 *.pyc
 .vscode/
 instance/
+tradedesk_backup.sql

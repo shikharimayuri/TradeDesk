@@ -7,6 +7,7 @@ TradeDesk | Edit Trade
 {% block content %}
 
 <form class="auth-form" action="{{ url_for('trade.edit_trade', trade_id=trade.id) }}" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
 

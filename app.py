@@ -1,15 +1,17 @@
 from flask import Flask, render_template, request
 from config import Config
-from extensions import db, bcrypt
+from flask_migrate import Migrate
+from flask_wtf.csrf import CSRFProtect
+from extensions import db, bcrypt, limiter
 from login_manager import login_manager
 from routes.auth import auth
 from flask_login import login_required, current_user
 from models.user import User
 from models.trade import Trade
-from flask_migrate import Migrate
 from routes.trade import trade
 from calendar import monthrange, month_name
 from datetime import date, datetime
+
 from services.dashboard_service import (
     get_recent_trades,
     get_weekly_trade_count,
@@ -22,8 +24,9 @@ from services.dashboard_service import (
     get_weekly_pnl_graph,
     get_weekly_accuracy_graph,
     get_weekly_win_loss,
-    get_weekly_trade_graph
+    get_weekly_trade_graph,
 )
+
 from services.analytics_service import (
     get_trades_between,
     calculate_accuracy,
@@ -36,11 +39,14 @@ from services.analytics_service import (
     calculate_trade_statistics,
     calculate_max_drawdown,
     calculate_max_consecutive_losses,
-    calculate_loss_rate
+    calculate_loss_rate,
 )
 
 app = Flask(__name__)
 app.config.from_object(Config)
+
+csrf = CSRFProtect(app)
+limiter.init_app(app)
 
 db.init_app(app)
 bcrypt.init_app(app)
@@ -60,19 +66,12 @@ def home():
 @login_required
 def dashboard():
     recent_trades = get_recent_trades(current_user.id)
-
     weekly_trade_count = get_weekly_trade_count(current_user.id)
-
     weekly_pnl = get_weekly_pnl(current_user.id)
-
     weekly_pnl_graph = get_weekly_pnl_graph(current_user.id)
-
     weekly_accuracy_graph = get_weekly_accuracy_graph(current_user.id)
-
     weekly_win_loss = get_weekly_win_loss(current_user.id)
-
     weekly_accuracy = get_weekly_accuracy(current_user.id)
-
     weekly_trade_graph = get_weekly_trade_graph(current_user.id)
 
     wins = weekly_win_loss["wins"]
@@ -103,7 +102,7 @@ def dashboard():
     calendar_data = get_monthly_calendar(
         current_user.id,
         year,
-        month
+        month,
     )
 
     selected_date = None
@@ -111,7 +110,7 @@ def dashboard():
     if selected:
         selected_date = datetime.strptime(
             selected,
-            "%Y-%m-%d"
+            "%Y-%m-%d",
         ).date()
 
     day_details = []
@@ -120,12 +119,12 @@ def dashboard():
     if selected_date:
         day_details = get_day_details(
             current_user.id,
-            selected_date
+            selected_date,
         )
 
         day_summary = get_day_summary(
             current_user.id,
-            selected_date
+            selected_date,
         )
 
     return render_template(
@@ -162,50 +161,33 @@ def analytics():
 
     start = request.args.get(
         "start",
-        default=today.replace(day=1).strftime("%Y-%m-%d")
+        default=today.replace(day=1).strftime("%Y-%m-%d"),
     )
 
     end = request.args.get(
         "end",
-        default=today.strftime("%Y-%m-%d")
+        default=today.strftime("%Y-%m-%d"),
     )
 
-    start_date = datetime.strptime(
-        start,
-        "%Y-%m-%d"
-    ).date()
-
-    end_date = datetime.strptime(
-        end,
-        "%Y-%m-%d"
-    ).date()
+    start_date = datetime.strptime(start, "%Y-%m-%d").date()
+    end_date = datetime.strptime(end, "%Y-%m-%d").date()
 
     trades = get_trades_between(
         current_user.id,
         start_date,
-        end_date
+        end_date,
     )
 
     accuracy = calculate_accuracy(trades)
-
     total_pnl = calculate_pnl(trades)
-
     trade_stats = calculate_trade_statistics(trades)
-
     plan_discipline = calculate_plan_discipline(trades)
-
     best_day, worst_day = calculate_best_worst_day(trades)
-
     trading_hours = calculate_trading_hours(trades)
-
     daily_pnl = get_daily_pnl(trades)
-
     equity_curve = get_equity_curve(trades)
-
     max_drawdown = calculate_max_drawdown(trades)
-
     max_consecutive_losses = calculate_max_consecutive_losses(trades)
-
     loss_rate = calculate_loss_rate(trades)
 
     return render_template(
@@ -224,9 +206,9 @@ def analytics():
         trade_stats=trade_stats,
         max_drawdown=max_drawdown,
         max_consecutive_losses=max_consecutive_losses,
-        loss_rate=loss_rate
+        loss_rate=loss_rate,
     )
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)
